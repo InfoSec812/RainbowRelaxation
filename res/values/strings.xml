@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Rainbow Relaxation</string>
+    <string name="prefs">Preferences</string>
+    <string name="speed_dialog_title">Settings</string>
+    <string name="speed">Speed</string>
+    <string name="steps">Steps</string>
+    <string name="close">Close</string>
+</resources>
