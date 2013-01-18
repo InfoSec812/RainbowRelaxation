@@ -54,7 +54,7 @@
         android:layout_height="wrap_content"
         android:enabled="false"
         android:indeterminate="false"
-        android:max="1200"
+        android:max="1160"
         android:progress="0" />
 
     <Button

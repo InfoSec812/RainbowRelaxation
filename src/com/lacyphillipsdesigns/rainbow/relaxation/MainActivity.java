@@ -2,9 +2,7 @@ package com.lacyphillipsdesigns.rainbow.relaxation;
 
 import java.util.Timer;
 import java.util.TimerTask;
-
 import com.lacyphillipsdesigns.rainbow.relaxation.R;
-
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
@@ -119,11 +117,11 @@ public class MainActivity extends Activity {
 				
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					prefs.edit().putInt("timer", progress).commit() ;
-					myPanel.setTimer(progress) ;
-					int minutes = Math.round(progress/60) ;
-					int seconds = progress%60 ;
-					timerText.setText(minutes+":"+seconds) ;
+					prefs.edit().putInt("timer", progress+40).commit() ;
+					myPanel.setTimer(progress+40) ;
+					int minutes = Math.round((progress+40)/60) ;
+					int seconds = (progress+40)%60 ;
+					timerText.setText(String.format("%02d:%02d", minutes, seconds)) ;
 					if (mWakeLock==null) {
 						PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 						mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "Screen Timeout");
@@ -144,10 +142,7 @@ public class MainActivity extends Activity {
 						public void run() {
 							Log.d(LOGTAG, "Releasing wake lock") ;
 							mWakeLock.release() ;
-							timerBar.setProgress(0) ;
-							((CheckBox)findViewById(R.id.timerEnable)).setChecked(false) ;
-							timerBar.setEnabled(false) ;
-							getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+							finish() ;
 						}
 					};
 					if (sleepTimer!=null) {
@@ -156,7 +151,7 @@ public class MainActivity extends Activity {
 					}
 					sleepTimer = new Timer() ;
 					Log.d(LOGTAG, "Scheduling timer for wake lock release") ;
-					sleepTimer.schedule(sleepTimerTask, progress*1000) ;
+					sleepTimer.schedule(sleepTimerTask, (progress+40)*1000) ;
 				}
 			}) ;
 
