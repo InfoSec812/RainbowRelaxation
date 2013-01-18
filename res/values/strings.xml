@@ -5,4 +5,6 @@
     <string name="speed">Speed</string>
     <string name="steps">Steps</string>
     <string name="close">Close</string>
+    <string name="timerEnableCheckbox">Enable Timer</string>
+    <string name="default_time">00:00</string>
 </resources>

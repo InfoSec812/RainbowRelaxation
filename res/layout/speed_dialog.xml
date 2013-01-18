@@ -33,6 +33,30 @@
         android:max="100"
         android:progress="100" />
 
+    <CheckBox
+        android:id="@+id/timerEnable"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left|center_vertical"
+        android:text="@string/timerEnableCheckbox" />
+
+    <TextView
+        android:id="@+id/timerLength"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="@string/default_time"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <SeekBar
+        android:id="@+id/timerSlider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:indeterminate="false"
+        android:max="1200"
+        android:progress="0" />
+
     <Button
         android:id="@+id/button1"
         android:layout_width="149dp"

@@ -1,5 +1,8 @@
 package com.lacyphillipsdesigns.rainbow.relaxation;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import com.lacyphillipsdesigns.rainbow.relaxation.R;
 
 import android.app.Activity;
@@ -9,14 +12,19 @@ import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.util.FloatMath;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
@@ -25,6 +33,7 @@ public class MainActivity extends Activity {
 	protected Panel myPanel ;
 	protected boolean dialogUp = false ;
 	protected SharedPreferences prefs ;
+	protected PowerManager.WakeLock mWakeLock = null ;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +99,76 @@ public class MainActivity extends Activity {
 				}
 			}) ;
 
+			final TextView timerText = (TextView) speedDialog.findViewById(R.id.timerLength) ;
+
+			final SeekBar timerBar = (SeekBar) speedDialog.findViewById(R.id.timerSlider) ;
+			timerBar.setProgress(0) ;
+			timerBar.setEnabled(false) ;
+			timerBar.setProgress(myPanel.getTimer()) ;
+			timerBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+				
+				private Timer sleepTimer = null ;
+				
+				@Override
+				public void onStopTrackingTouch(SeekBar seekBar) {
+				}
+				
+				@Override
+				public void onStartTrackingTouch(SeekBar seekBar) {
+				}
+				
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					prefs.edit().putInt("timer", progress).commit() ;
+					myPanel.setTimer(progress) ;
+					int minutes = Math.round(progress/60) ;
+					int seconds = progress%60 ;
+					timerText.setText(minutes+":"+seconds) ;
+					if (mWakeLock==null) {
+						PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+						mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "Screen Timeout");
+						Log.d(LOGTAG, "Aquiring wake lock") ;
+						mWakeLock.acquire() ;
+						getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+					}
+					
+					if (!mWakeLock.isHeld()) {
+						Log.d(LOGTAG, "Aquiring wake lock") ;
+						mWakeLock.acquire() ;
+						getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+					}
+					
+					TimerTask sleepTimerTask = new TimerTask() {
+						
+						@Override
+						public void run() {
+							Log.d(LOGTAG, "Releasing wake lock") ;
+							mWakeLock.release() ;
+							timerBar.setProgress(0) ;
+							((CheckBox)findViewById(R.id.timerEnable)).setChecked(false) ;
+							timerBar.setEnabled(false) ;
+							getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+						}
+					};
+					if (sleepTimer!=null) {
+						Log.d(LOGTAG, "Cancelling timer in order to reschedule") ;
+						sleepTimer.cancel() ;
+					}
+					sleepTimer = new Timer() ;
+					Log.d(LOGTAG, "Scheduling timer for wake lock release") ;
+					sleepTimer.schedule(sleepTimerTask, progress*1000) ;
+				}
+			}) ;
+
+			CheckBox timerEnable = (CheckBox) speedDialog.findViewById(R.id.timerEnable) ;
+			timerEnable.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+				
+				@Override
+				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+					timerBar.setEnabled(isChecked) ;
+				}
+			}) ;
+
 			Button closeButton = (Button) speedDialog.findViewById(R.id.button1);
 			closeButton.setOnClickListener(new View.OnClickListener() {
 
@@ -118,6 +197,7 @@ public class MainActivity extends Activity {
 		private int center = 128 ;
 		private int width = 127 ;
 		private int steps = 8000 ;
+		private int timer = 1200 ;
 		private float freq = 0.1F ;
 
 		public Panel(Context context) {
@@ -155,6 +235,14 @@ public class MainActivity extends Activity {
 
 		public int getDelay() {
 			return colorChanger.getDelay() ;
+		}
+
+		public void setTimer(int time) {
+			this.timer = time ;
+		}
+
+		public int getTimer() {
+			return this.timer ;
 		}
 
 		@Override
