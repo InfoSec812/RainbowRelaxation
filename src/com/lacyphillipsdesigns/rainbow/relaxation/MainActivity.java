@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
 		private int center = 128 ;
 		private int width = 127 ;
 		private int steps = 8000 ;
-		private static final float FREQ = 0.1F ;
+		private float freq = 0.1F ;
 
 		public Panel(Context context) {
 			super(context);
@@ -145,6 +145,7 @@ public class MainActivity extends Activity {
 
 		public void setSteps(int steps) {
 			this.steps = (steps*40)+4000 ;
+			freq = (314.159F*2)/this.steps ;
 			Log.d(LOGTAG, "Steps: "+this.steps) ;
 		}
 
@@ -163,9 +164,9 @@ public class MainActivity extends Activity {
 
 		@Override
 		protected void onDraw(Canvas canvas) {
-			int red = Math.round(FloatMath.sin(FREQ*step + 0) * width + center) ;
-			int green = Math.round(FloatMath.sin(FREQ*step + 2) * width + center) ;
-			int blue = Math.round(FloatMath.sin(FREQ*step + 4) * width + center) ;
+			int red = Math.round(FloatMath.sin(freq*step + 0) * width + center) ;
+			int green = Math.round(FloatMath.sin(freq*step + 2) * width + center) ;
+			int blue = Math.round(FloatMath.sin(freq*step + 4) * width + center) ;
 			step++ ;
 			if (step>=steps) {
 				step = 0 ;
