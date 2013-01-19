@@ -17,7 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:max="100"
-        android:progress="@integer/speed_max_value" />
+        android:progress="50" />
 
     <TextView
         android:id="@+id/textView2"
@@ -31,7 +31,22 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:max="100"
-        android:progress="100" />
+        android:progress="50" />
+
+    <TextView
+        android:id="@+id/brightnessLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/brightnessLabel"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <SeekBar
+        android:id="@+id/brightnessBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="false"
+        android:max="50"
+        android:progress="50" />
 
     <CheckBox
         android:id="@+id/timerEnable"
@@ -55,7 +70,7 @@
         android:enabled="false"
         android:indeterminate="false"
         android:max="1160"
-        android:progress="0" />
+        android:progress="1160" />
 
     <Button
         android:id="@+id/button1"

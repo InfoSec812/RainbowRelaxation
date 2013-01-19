@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.util.FloatMath;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -32,6 +33,8 @@ public class MainActivity extends Activity {
 	protected boolean dialogUp = false ;
 	protected SharedPreferences prefs ;
 	protected PowerManager.WakeLock mWakeLock = null ;
+	
+	protected Timer sleepTimer = null ;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +44,15 @@ public class MainActivity extends Activity {
 		setContentView(myPanel) ;
 
 		prefs = getSharedPreferences("rainbow", 0) ;
-		myPanel.setSteps(prefs.getInt("steps", 100)) ;
+		myPanel.setSteps(prefs.getInt("steps", 50)) ;
+		myPanel.setDelay(prefs.getInt("speed", 50)) ;
+		myPanel.setAlpha(prefs.getInt("alpha", 50)) ;
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		showDialog(0) ;
+		return false;
 	}
 
 	@Override
@@ -97,15 +108,33 @@ public class MainActivity extends Activity {
 				}
 			}) ;
 
+			final SeekBar brightnessBar = (SeekBar) speedDialog.findViewById(R.id.brightnessBar) ;
+			brightnessBar.setProgress(myPanel.getAlpha()) ;
+			brightnessBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+				
+				@Override
+				public void onStopTrackingTouch(SeekBar seekBar) {
+				}
+				
+				@Override
+				public void onStartTrackingTouch(SeekBar seekBar) {
+				}
+				
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress,
+						boolean fromUser) {
+					prefs.edit().putInt("brightness", progress).commit() ;
+					myPanel.setAlpha(progress) ;
+				}
+			}) ;
+
 			final TextView timerText = (TextView) speedDialog.findViewById(R.id.timerLength) ;
 
 			final SeekBar timerBar = (SeekBar) speedDialog.findViewById(R.id.timerSlider) ;
 			timerBar.setProgress(0) ;
-			timerBar.setEnabled(false) ;
+			timerBar.setEnabled(false);
 			timerBar.setProgress(myPanel.getTimer()) ;
 			timerBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-				
-				private Timer sleepTimer = null ;
 				
 				@Override
 				public void onStopTrackingTouch(SeekBar seekBar) {
@@ -142,6 +171,7 @@ public class MainActivity extends Activity {
 						public void run() {
 							Log.d(LOGTAG, "Releasing wake lock") ;
 							mWakeLock.release() ;
+							prefs.edit().putBoolean("timer", false).commit() ;
 							finish() ;
 						}
 					};
@@ -156,10 +186,15 @@ public class MainActivity extends Activity {
 			}) ;
 
 			CheckBox timerEnable = (CheckBox) speedDialog.findViewById(R.id.timerEnable) ;
+			timerEnable.setChecked(prefs.getBoolean("timeout", false)) ;
 			timerEnable.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 				
 				@Override
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+					prefs.edit().putBoolean("timeout", isChecked).commit() ;
+					if (!isChecked && prefs.getBoolean("timeout", false)) {
+						sleepTimer.cancel() ;
+					}
 					timerBar.setEnabled(isChecked) ;
 				}
 			}) ;
@@ -186,13 +221,28 @@ public class MainActivity extends Activity {
 
 	private class Panel extends SurfaceView implements SurfaceHolder.Callback {
 
-		protected ColorChangeThread colorChanger ;
+		protected ColorChangeThread colorChanger = null ;
 		private int step = 0 ;
 
 		private int center = 128 ;
 		private int width = 127 ;
-		private int steps = 8000 ;
-		private int timer = 1200 ;
+		private int steps = 4000 ;
+		private int timer = 600 ;
+		private float alpha = 1 ;
+		private int alphaSetting = 50 ;
+
+		public void setAlpha(int alphaSetting) {
+			Log.d(LOGTAG, "Alpha Setting: "+alphaSetting) ;
+			this.alphaSetting = alphaSetting ;
+			float alphaVal = (alphaSetting+50F)/100F ;
+			Log.d(LOGTAG, "Alpha Value: "+alphaVal) ;
+			this.alpha = alphaVal ;
+		}
+
+		public int getAlpha() {
+			return this.alphaSetting ;
+		}
+
 		private float freq = 0.1F ;
 
 		public Panel(Context context) {
@@ -225,7 +275,9 @@ public class MainActivity extends Activity {
 		}
 
 		public void setDelay(int delay) {
-			colorChanger.setDelay(delay) ;
+			if (colorChanger!=null) {
+				colorChanger.setDelay(delay) ;
+			}
 		}
 
 		public int getDelay() {
@@ -247,9 +299,9 @@ public class MainActivity extends Activity {
 
 		@Override
 		protected void onDraw(Canvas canvas) {
-			int red = Math.round(FloatMath.sin(freq*step + 0) * width + center) ;
-			int green = Math.round(FloatMath.sin(freq*step + 2) * width + center) ;
-			int blue = Math.round(FloatMath.sin(freq*step + 4) * width + center) ;
+			int red = Math.round((FloatMath.sin(freq*step + 0) * width + center)*alpha) ;
+			int green = Math.round((FloatMath.sin(freq*step + 2) * width + center)*alpha) ;
+			int blue = Math.round((FloatMath.sin(freq*step + 4) * width + center)*alpha) ;
 			step++ ;
 			if (step>=steps) {
 				step = 0 ;
@@ -260,7 +312,6 @@ public class MainActivity extends Activity {
 				Log.i(LOGTAG, "Canvas was NULL.") ;
 			}
 		}
-		
 	}
 
 	protected class ColorChangeThread extends Thread {
